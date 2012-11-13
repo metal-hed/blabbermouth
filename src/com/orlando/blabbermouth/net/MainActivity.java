@@ -4,6 +4,10 @@ import java.util.Iterator;
 import java.util.List;
 
 import android.app.Activity;
+import android.content.Context;
+import android.content.Intent;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.os.StrictMode;
 import android.view.Menu;
@@ -15,6 +19,10 @@ import android.widget.ListView;
 import android.widget.Toast;
 
 public class MainActivity extends Activity {
+	
+	public final static String TITLE_MESSAGE = "com.orlando.blabbermouth.net.TITLE";
+	public final static String ARTICLE_MESSAGE = "com.orlando.blabbermouth.net.ARTICLE";
+	public final static String LINK_MESSAGE = "com.orlando.blabbermouth.net.LINK";
 	
 	private RSSFeed rssFeed;
 	private final String url = "http://feeds.feedburner.com/blabbermouth?fmt=xml";
@@ -33,17 +41,18 @@ public class MainActivity extends Activity {
         listView.setOnItemClickListener(new OnItemClickListener() {
         	  public void onItemClick(AdapterView<?> parent, View view,
         	    int position, long id) {
-        	    Toast.makeText(getApplicationContext(),
-        	      "Click ListItem Number " + position, Toast.LENGTH_LONG)
-        	      .show();
+        	    getArticle(position);
         	  }
         	});
         
-                
-        RSSFeedParser parser = new RSSFeedParser(url); 
-        rssFeed = parser.parse();
-        
-        String [] values = getRSSTitles();
+        String [] values = null;
+        if(isOnline()){        
+        	RSSFeedParser parser = new RSSFeedParser(url); 
+        	rssFeed = parser.parse();
+        	values = getRSSTitles();
+        }else{
+        	Toast.makeText(getApplicationContext(), "No internet connection available", Toast.LENGTH_LONG).show();
+        }
         
         // First paramenter - Context
         // Second parameter - Layout for the row
@@ -76,5 +85,27 @@ public class MainActivity extends Activity {
     	}
     	
     	return tits;
+    }
+    
+    public void getArticle(int position){
+    	Intent intent = new Intent(this, ViewArticleActivity.class);
+    	String title = rssFeed.getEntries().get(position).getTitle();
+    	String article = rssFeed.getEntries().get(position).getDescription();
+    	String link = rssFeed.getEntries().get(position).getLink();
+    	
+    	intent.putExtra(TITLE_MESSAGE, title);
+    	intent.putExtra(ARTICLE_MESSAGE, article);
+    	intent.putExtra(LINK_MESSAGE, link);
+    	startActivity(intent);
+    }
+    
+    private boolean isOnline() {
+        ConnectivityManager cm =
+            (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo netInfo = cm.getActiveNetworkInfo();
+        if (netInfo != null && netInfo.isConnectedOrConnecting()) {
+            return true;
+        }
+        return false;
     }
 }

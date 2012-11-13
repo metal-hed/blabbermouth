@@ -22,7 +22,7 @@ public class RSSFeedParser {
   static final String CHANNEL = "channel";
   static final String LANGUAGE = "language";
   static final String COPYRIGHT = "copyright";
-  static final String LINK = "link";
+  static final String LINK = "feedburner:origLink";
   static final String AUTHOR = "author";
   static final String ITEM = "item";
   static final String PUB_DATE = "lastBuildDate";
@@ -31,7 +31,7 @@ public class RSSFeedParser {
 
   final URL url;
 
-  public static void main (String [] args){
+  /*public static void main (String [] args){
 	  RSSFeedParser r = new RSSFeedParser("http://feeds.feedburner.com/blabbermouth?fmt=xml");
 	  RSSFeed f = r.parse();
 	  List<RSSEntry> l = f.getEntries();
@@ -47,7 +47,7 @@ public class RSSFeedParser {
 	  		System.out.println(s);
 	  	}
 	  	
-  }
+  }*/
    
   public RSSFeedParser(String feedUrl) {
     try {
