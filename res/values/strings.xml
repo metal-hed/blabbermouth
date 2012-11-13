@@ -1,7 +1,7 @@
 <resources>
 
     <string name="app_name">Blabbermouth.net</string>
-    <string name="menu_settings">Refresh</string>
+    <string name="menu_refresh">Refresh</string>
     <string name="title_activity_main">Blabbermouth.net</string>
     <string name="title_activity_view_article">Blabbermouth.net</string>
 

@@ -10,7 +10,9 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.os.StrictMode;
+import android.support.v4.app.NavUtils;
 import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
@@ -44,26 +46,30 @@ public class MainActivity extends Activity {
         	    getArticle(position);
         	  }
         	});
-        
-        String [] values = null;
-        if(isOnline()){        
-        	RSSFeedParser parser = new RSSFeedParser(url); 
-        	rssFeed = parser.parse();
-        	values = getRSSTitles();
-        }else{
-        	Toast.makeText(getApplicationContext(), "No internet connection available", Toast.LENGTH_LONG).show();
-        }
-        
-        // First paramenter - Context
-        // Second parameter - Layout for the row
-        // Third parameter - ID of the TextView to which the data is written
-        // Forth - the Array of data
-        ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
-          android.R.layout.simple_list_item_1, android.R.id.text1, values);
+        updateList();
+    }
+    
+    public void updateList(){
+    	ListView listView = (ListView) findViewById(R.id.storylist);
+    	 String [] values = null;
+         if(isOnline()){        
+         	RSSFeedParser parser = new RSSFeedParser(url); 
+         	rssFeed = parser.parse();
+         	values = getRSSTitles();
+         	
+         	// First paramenter - Context
+            // Second parameter - Layout for the row
+            // Third parameter - ID of the TextView to which the data is written
+            // Forth - the Array of data
+            ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
+              android.R.layout.simple_list_item_1, android.R.id.text1, values);
 
-        // Assign adapter to ListView
-        listView.setAdapter(adapter); 
-        
+            // Assign adapter to ListView
+            listView.setAdapter(adapter);
+         }else{
+         	Toast.makeText(getApplicationContext(), "No internet connection available", Toast.LENGTH_LONG).show();
+         }
+          
     }
 
     @Override
@@ -71,6 +77,17 @@ public class MainActivity extends Activity {
         getMenuInflater().inflate(R.menu.activity_main, menu);
         return true;
     }
+    
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.menu_refresh:
+                updateList();
+                return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+    
    
     private String [] getRSSTitles(){
     	
