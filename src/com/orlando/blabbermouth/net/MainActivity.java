@@ -4,24 +4,24 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
 import java.util.List;
 
 import org.xmlpull.v1.XmlPullParserException;
 
 import android.app.Activity;
 import android.content.Context;
-import android.content.SharedPreferences;
+import android.content.Intent;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.webkit.WebView;
+import android.view.View;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemClickListener;
+import android.widget.ArrayAdapter;
+import android.widget.ListView;
 import android.widget.Toast;
 
 import com.orlando.blabbermouth.net.BlabbermouthParser.Item;
@@ -32,24 +32,24 @@ public class MainActivity extends Activity {
 	public final static String ARTICLE_MESSAGE = "com.orlando.blabbermouth.net.ARTICLE";
 	public final static String LINK_MESSAGE = "com.orlando.blabbermouth.net.LINK";
 	
-	private RSSFeed rssFeed;
+	private List<Item> rssFeed;
 	private final String url = "http://feeds.feedburner.com/blabbermouth?fmt=xml";
 	
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        loadPage();
-    
         
-       /* ListView listView = (ListView) findViewById(R.id.itemlist);
-        
+        ListView listView = (ListView) findViewById(R.id.itemlist);
+
         listView.setOnItemClickListener(new OnItemClickListener() {
         	  public void onItemClick(AdapterView<?> parent, View view,
         	    int position, long id) {
-        	   // Place click action here
+        	   getArticle(position);
         	  }
-        	});*/
+        	});
+        
+        loadPage();
     }
    
 
@@ -88,85 +88,97 @@ public class MainActivity extends Activity {
         return false;
     }
     
- // Uploads XML from stackoverflow.com, parses it, and combines it with
- // HTML markup. Returns HTML string.
- private String loadXmlFromNetwork(String urlString) throws XmlPullParserException, IOException {
-     InputStream stream = null;
-     // Instantiate the parser
-     BlabbermouthParser parser = new BlabbermouthParser();
-     List<Item> items = null;
-     String title = null;
-     String url = null;
-     String summary = null;
-     Calendar rightNow = Calendar.getInstance(); 
-     DateFormat formatter = new SimpleDateFormat("MMM dd h:mmaa");
-         
-         
-     StringBuilder htmlString = new StringBuilder();
-     /*htmlString.append("<h3>" + getResources().getString(R.string.page_title) + "</h3>");
-     htmlString.append("<em>" + getResources().getString(R.string.updated) + " " + 
-             formatter.format(rightNow.getTime()) + "</em>");*/
-         
-     try {
-         stream = downloadUrl(urlString);        
-         items = parser.parse(stream);
-     // Makes sure that the InputStream is closed after the app is
-     // finished using it.
-     } finally {
-         if (stream != null) {
-             stream.close();
-         } 
-      }
-     
-     // BlabbermouthParser returns a List (called "items") of Item objects.
-     // Each Entry object represents a single post in the XML feed.
-     // This section processes the entries list to combine each entry with HTML markup.
-     // Each entry is displayed in the UI as a link that optionally includes
-     // a text summary.
-     for (Item item : items) {       
-         htmlString.append("<p><a href='");
-         htmlString.append(item.guid);
-         htmlString.append("'>" + item.title + "</a></p>");
-         htmlString.append(item.description);
-     }
-     return htmlString.toString();
- }
+	 // Uploads XML from stackoverflow.com, parses it, and combines it with
+	 // HTML markup. Returns HTML string.
+	 private String loadXmlFromNetwork(String urlString) throws XmlPullParserException, IOException {
+	     InputStream stream = null;
+	     // Instantiate the parser
+	     BlabbermouthParser parser = new BlabbermouthParser();
+	         
+	     try {
+	         stream = downloadUrl(urlString);        
+	         rssFeed = parser.parse(stream);
+	     // Makes sure that the InputStream is closed after the app is
+	     // finished using it.
+	     } finally {
+	         if (stream != null) {
+	             stream.close();
+	         } 
+	      }
+	     
+	     return "200";
+	 }
 
- // Given a string representation of a URL, sets up a connection and gets
- // an input stream.
- private InputStream downloadUrl(String urlString) throws IOException {
-     URL url = new URL(urlString);
-     HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-     conn.setReadTimeout(10000 /* milliseconds */);
-     conn.setConnectTimeout(15000 /* milliseconds */);
-     conn.setRequestMethod("GET");
-     conn.setDoInput(true);
-     // Starts the query
-     conn.connect();
-     InputStream stream = conn.getInputStream();
-     return stream;
- }
+	 // Given a string representation of a URL, sets up a connection and gets
+	 // an input stream.
+	 private InputStream downloadUrl(String urlString) throws IOException {
+	     URL url = new URL(urlString);
+	     HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+	     conn.setReadTimeout(10000 /* milliseconds */);
+	     conn.setConnectTimeout(15000 /* milliseconds */);
+	     conn.setRequestMethod("GET");
+	     conn.setDoInput(true);
+	     // Starts the query
+	     conn.connect();
+	     InputStream stream = conn.getInputStream();
+	     return stream;
+	 }
+ 
+	 private String [] getTitles(List<Item> feed){
+		 String [] titles = new String[feed.size()];
+		
+		 for(int i = 0; i < titles.length; i++){
+			 titles[i] = feed.get(i).title;
+		 }
+		 
+		 return titles;
+	 }
+ 
+	 public void getArticle(int position){
+	 	Intent intent = new Intent(this, ViewArticleActivity.class);
+	 	String title = rssFeed.get(position).title;
+	 	String article = rssFeed.get(position).description;
+	 	String link = rssFeed.get(position).guid;
+	 	
+	 	intent.putExtra(TITLE_MESSAGE, title);
+	 	intent.putExtra(ARTICLE_MESSAGE, article);
+	 	intent.putExtra(LINK_MESSAGE, link);
+	 	startActivity(intent);
+	 }
     
-    private class DownloadXMLTask extends AsyncTask<String, Void, String>{//Change this for returning a list
+	 private void updateListView(){
+		 ListView myListView = (ListView) findViewById(R.id.itemlist);
+	     
+	     // First paramenter - Context
+		 // Second parameter - Layout for the row
+		 // Third parameter - ID of the TextView to which the data is written
+		 // Forth - the Array of data
+		 ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
+				 android.R.layout.simple_list_item_1, android.R.id.text1, getTitles(rssFeed));
+	
+		 // Assign adapter to ListView
+	     myListView.setAdapter(adapter);
+	 }
+    private class DownloadXMLTask extends AsyncTask<String, Void, String>{
     	
     	@Override
         protected String doInBackground(String... urls) {
             try {
-                return loadXmlFromNetwork(urls[0]);
+                return loadXmlFromNetwork(url);
             } catch (IOException e) {
-                return getResources().getString(R.string.no_connection);
+            	Toast.makeText(getApplicationContext(), getResources().getString(R.string.no_connection), Toast.LENGTH_SHORT).show();
+            	return null;
             } catch (XmlPullParserException e) {
-            	return getResources().getString(R.string.xml_error);
+            	Toast.makeText(getApplicationContext(), getResources().getString(R.string.xml_error), Toast.LENGTH_SHORT).show();
+            	return null;
             }
         }
     	
     	@Override
         protected void onPostExecute(String result) {  
             setContentView(R.layout.activity_main);
-            // Displays the HTML string in the UI via a WebView
-            WebView myWebView = (WebView) findViewById(R.id.itemlist);
-            myWebView.loadData(result, "text/html", null);
-            Toast.makeText(getApplicationContext(), getResources().getString(R.string.load_complete), Toast.LENGTH_SHORT).show();
+            updateListView();
+            //Toast.makeText(getApplicationContext(), getResources().getString(R.string.load_complete), Toast.LENGTH_SHORT).show();
         }
     	
     }
